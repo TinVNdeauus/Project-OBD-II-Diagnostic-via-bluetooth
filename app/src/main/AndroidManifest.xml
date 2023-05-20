@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+
+
+
+    <application
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.BluetoothOBDIIDiagnostic"
+        tools:targetApi="33">
+        <activity android:name=".bluetoothterminal.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity android:name=".bluetoothterminal.Mod_1.Mod1Activity" />
+        <activity android:name=".bluetoothterminal.Mod_2.Mod2Activity"/>
+        <activity android:name=".bluetoothterminal.Mod_3.Mod3Activity"/>
+        <activity android:name=".bluetoothterminal.Mod_4.Mod4Activity"/>
+        <activity android:name=".bluetoothterminal.Mod_6.Mod6Activity"/>
+        <activity android:name=".bluetoothterminal.Mod_7.Mod7Activity"/>
+        <activity android:name=".bluetoothterminal.Mod_9.Mod9Activity"/>
+        <activity android:name=".bluetoothterminal.TerminalActivity"/>
+
+    </application>
+
+</manifest>
