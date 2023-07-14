@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.Button;
 
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.bluetooth_obd_ii_diagnostic.R;
@@ -126,4 +127,5 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TerminalActivity.class);
         startActivity(intent);
     }
+
 }

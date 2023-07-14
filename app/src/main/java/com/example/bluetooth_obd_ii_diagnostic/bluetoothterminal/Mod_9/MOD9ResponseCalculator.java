@@ -1,11 +1,6 @@
 package com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_9;
 
 
-import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_9.PIDsFormulas.CID;
-import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_9.PIDsFormulas.CVN;
-import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_9.PIDsFormulas.ECU_NAME;
-import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_9.PIDsFormulas.ECU_NAME_MESSAGE_COUNT;
-import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_9.PIDsFormulas.IN_USE_PERFORMANCE_TRACKING_GASOLINE;
 import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_9.PIDsFormulas.PIDs_SUPPORTED_01_20;
 import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_9.PIDsFormulas.VIN;
 import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.PIDsEnums.NinthModeRequestEnums;
@@ -41,21 +36,9 @@ class MOD9ResponseCalculator {
             case "VIN":
                 responseMessage = VIN.read(hexline);
                 break;
-            case "CID":
-                responseMessage = CID.read(hexline);
-                break;
-            case "CVN":
-                responseMessage = CVN.read(firstHex, secondHex, thirdHex, fourthHex);
-                break;
-            case "IN_USE_PERFORMANCE_TRACKING_GASOLINE":
-                responseMessage = IN_USE_PERFORMANCE_TRACKING_GASOLINE.read(hexline);
-                break;
-            case "ECU_NAME":
-                responseMessage = ECU_NAME.read(hexline);
-                break;
-            case "ECU_NAME_MESSAGE_COUNT":
-                responseMessage = ECU_NAME_MESSAGE_COUNT.read(firstHex);
-                break;
+
+
+
             default: responseMessage = "Invalid request.";
                 break;
         }

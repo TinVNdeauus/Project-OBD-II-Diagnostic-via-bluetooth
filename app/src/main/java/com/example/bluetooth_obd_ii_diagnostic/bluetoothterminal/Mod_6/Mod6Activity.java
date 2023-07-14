@@ -1,10 +1,13 @@
 package com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_6;
 
 
+import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 
@@ -16,7 +19,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.bluetooth_obd_ii_diagnostic.R;
 import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.PIDsEnums.SixthModeRequestEnums;
@@ -36,6 +43,7 @@ public class Mod6Activity extends AppCompatActivity {
     private BluetoothSocket socket;
     private OutputStream outputStream;
     private InputStream inputStream;
+    private static final int REQUEST_BLUETOOTH_PERMISSION = 1;
     Button startButton, sendButton, clearButton, stopButton;
     TextView textView;
     Spinner MOD_6_LIST;
@@ -62,7 +70,16 @@ public class Mod6Activity extends AppCompatActivity {
 
         setupUserInterface(false);
     }
-
+    ActivityResultLauncher<Intent> requestBluetoothLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    // Bluetooth was enabled by the user
+                } else {
+                    // Bluetooth was not enabled by the user
+                }
+            }
+    );
     public void setupUserInterface(boolean bool) {
         startButton.setEnabled(!bool);
         sendButton.setEnabled(bool);
@@ -74,56 +91,68 @@ public class Mod6Activity extends AppCompatActivity {
         boolean found = false;
         BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
-            Toast.makeText(getApplicationContext(), "Bluetooth not supported", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Bluetooth không được hỗ trợ", Toast.LENGTH_SHORT).show();
         }
         if (!bluetoothAdapter.isEnabled()) {
             Intent enableAdapter = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableAdapter, 0);
+            requestBluetoothLauncher.launch(enableAdapter);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
-        if (bondedDevices.isEmpty()) {
-            Toast.makeText(getApplicationContext(), "Device is not paired", Toast.LENGTH_SHORT).show();
-        } else {
-            for (BluetoothDevice deviceIterator : bondedDevices) {
-                if (deviceIterator.getAddress().equals(DEVICE_ADDRESS)) {
-                    device = deviceIterator;
-                    found = true;
-                    break;
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED) {
+            // Quyền đã được cấp, tiếp tục truy cập các thiết bị đã ghép nối
+            Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
+            if (bondedDevices.isEmpty()) {
+                Toast.makeText(getApplicationContext(), "Thiết bị chưa được ghép nối", Toast.LENGTH_SHORT).show();
+            } else {
+                for (BluetoothDevice deviceIterator : bondedDevices) {
+                    if (deviceIterator.getAddress().equals(DEVICE_ADDRESS)) {
+                        device = deviceIterator;
+                        found = true;
+                        break;
+                    }
                 }
             }
+        } else {
+            // Quyền chưa được cấp, yêu cầu nó
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH}, REQUEST_BLUETOOTH_PERMISSION);
         }
+
         return found;
     }
 
     public boolean initializeBluetoothConnection() {
         boolean connected = true;
-        try {
-            socket = device.createRfcommSocketToServiceRecord(PORT_UUID);
-            socket.connect();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED) {
+            // Quyền đã được cấp, tiếp tục thiết lập kết nối Bluetooth
+            try {
+                socket = device.createRfcommSocketToServiceRecord(PORT_UUID);
+                socket.connect();
+            } catch (IOException e) {
+                e.printStackTrace();
+                connected = false;
+            }
+            if (connected) {
+                try {
+                    outputStream = socket.getOutputStream();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    inputStream = socket.getInputStream();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            // Quyền chưa được cấp, yêu cầu nó
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH}, REQUEST_BLUETOOTH_PERMISSION);
             connected = false;
         }
-        if (connected) {
-            try {
-                outputStream = socket.getOutputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                inputStream = socket.getInputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-
         return connected;
     }
 

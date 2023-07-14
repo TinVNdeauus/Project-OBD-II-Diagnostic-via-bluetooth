@@ -1,9 +1,13 @@
 package com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.Mod_1;
 
+import android.Manifest;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.text.method.ScrollingMovementMethod;
@@ -15,9 +19,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.PackageManagerCompat;
 
 import com.example.bluetooth_obd_ii_diagnostic.R;
+import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.MainActivity;
 import com.example.bluetooth_obd_ii_diagnostic.bluetoothterminal.PIDsEnums.FirstModeRequestEnums;
 
 import java.io.IOException;
@@ -33,6 +43,8 @@ public class Mod1Activity extends AppCompatActivity {
     private final UUID PORT_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
     private final String MOD_1_PREFIX = "41";
     private final String PID_NOT_SUPPORTED = "This PID is not supported. \n";
+    private static final int REQUEST_BLUETOOTH_PERMISSION = 1;
+
     private BluetoothDevice device;
     private BluetoothSocket socket;
     private OutputStream outputStream;
@@ -46,6 +58,16 @@ public class Mod1Activity extends AppCompatActivity {
     int bufferPosition;
     boolean stopThread;
 
+    ActivityResultLauncher<Intent> requestBluetoothLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    // Bluetooth was enabled by the user
+                } else {
+                    // Bluetooth was not enabled by the user
+                }
+            }
+    );
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,6 +88,7 @@ public class Mod1Activity extends AppCompatActivity {
         setupUserInterface(false);
     }
 
+
     public void setupUserInterface(boolean bool) {
         startButton.setEnabled(!bool);
         sendButton.setEnabled(bool);
@@ -81,51 +104,67 @@ public class Mod1Activity extends AppCompatActivity {
         }
         if (!bluetoothAdapter.isEnabled()) {
             Intent enableAdapter = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableAdapter, 0);
+            requestBluetoothLauncher.launch(enableAdapter);
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
-        if (bondedDevices.isEmpty()) {
-            Toast.makeText(getApplicationContext(), "Device is not paired", Toast.LENGTH_SHORT).show();
-        } else {
-            for (BluetoothDevice deviceIterator : bondedDevices) {
-                if (deviceIterator.getAddress().equals(DEVICE_ADDRESS)) {
-                    device = deviceIterator;
-                    found = true;
-                    break;
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED) {
+            // Quyền đã được cấp, tiếp tục truy cập các thiết bị đã ghép nối
+            Set<BluetoothDevice> bondedDevices = bluetoothAdapter.getBondedDevices();
+            if (bondedDevices.isEmpty()) {
+                Toast.makeText(getApplicationContext(), "Thiết bị chưa được ghép nối", Toast.LENGTH_SHORT).show();
+            } else {
+                for (BluetoothDevice deviceIterator : bondedDevices) {
+                    if (deviceIterator.getAddress().equals(DEVICE_ADDRESS)) {
+                        device = deviceIterator;
+                        found = true;
+                        break;
+                    }
                 }
             }
+        } else {
+            // Quyền chưa được cấp, yêu cầu nó
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH}, REQUEST_BLUETOOTH_PERMISSION);
         }
+
         return found;
     }
 
     public boolean initializeBluetoothConnection() {
         boolean connected = true;
-        try {
-            socket = device.createRfcommSocketToServiceRecord(PORT_UUID);
-            socket.connect();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED) {
+            // Quyền đã được cấp, tiếp tục thiết lập kết nối Bluetooth
+            try {
+                socket = device.createRfcommSocketToServiceRecord(PORT_UUID);
+                socket.connect();
+            } catch (IOException e) {
+                e.printStackTrace();
+                connected = false;
+            }
+            if (connected) {
+                try {
+                    outputStream = socket.getOutputStream();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    inputStream = socket.getInputStream();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            // Quyền chưa được cấp, yêu cầu nó
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.BLUETOOTH}, REQUEST_BLUETOOTH_PERMISSION);
             connected = false;
-        }
-        if (connected) {
-            try {
-                outputStream = socket.getOutputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-                inputStream = socket.getInputStream();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
         return connected;
     }
+
 
 
     public void onClickStart(View view) {

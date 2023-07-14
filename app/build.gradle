@@ -1,4 +1,4 @@
-plugins {
+    plugins {
     id 'com.android.application'
 }
 android {
@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.bluetooth_obd_ii_diagnostic"
-        minSdk 26
+        minSdk 23
         targetSdk 33
         versionCode 1
         versionName "1.0"
